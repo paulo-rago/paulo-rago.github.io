@@ -398,13 +398,16 @@ body{background:#1a1a2e;cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://w
 
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;">
       <sc-for list="{{ certs }}" as="c" hint-placeholder-count="5">
-        <div style="background:#16213e;border:3px solid #0f3460;box-shadow:5px 5px 0 rgba(0,0,0,0.4);padding:16px;display:flex;align-items:center;gap:14px;transition:transform .1s;" style-hover="transform:translateY(-3px);border-color:#f5a623;">
+        <a href="{{ c.url }}" target="_blank" rel="noopener" onMouseEnter="{{ playBlip }}" style="background:#16213e;border:3px solid #0f3460;box-shadow:5px 5px 0 rgba(0,0,0,0.4);padding:16px;display:flex;align-items:center;gap:14px;transition:transform .1s;text-decoration:none;" style-hover="transform:translateY(-3px);border-color:#f5a623;">
           <div style="width:46px;height:46px;flex-shrink:0;background:{{ c.color }};display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:3px 3px 0 #0f3460;">{{ c.icon }}</div>
           <div style="display:flex;flex-direction:column;gap:5px;">
             <span style="font-family:'Press Start 2P';font-size:7px;color:#4ade80;letter-spacing:1px;">UNLOCKED</span>
             <span style="font-family:'Inter';font-size:13px;font-weight:600;color:#fff;line-height:1.4;">{{ c.name }}</span>
           </div>
-        </div>
+          <sc-if value="{{ c.url }}" hint-placeholder-val="{{ false }}">
+            <span style="margin-left:auto;font-family:'Press Start 2P';font-size:9px;color:#4ade80;">&#8599;</span>
+          </sc-if>
+        </a>
       </sc-for>
     </div>
   </section>
@@ -601,7 +604,9 @@ class Component extends DCLogic {
       { name: 'Java Fundamentals', icon: '\u2615', color: '#e94560' },
       { name: 'Aplica\u00E7\u00F5es Web com Django 4 e Bootstrap 5', icon: '\uD83D\uDD78\uFE0F', color: '#4ade80' },
       { name: 'An\u00E1lise de Dados com Python e Pandas', icon: '\uD83D\uDC0D', color: '#f5a623' },
-      { name: 'Decola Tech 2025', icon: '\uD83D\uDE80', color: '#a78bfa' }
+      { name: 'Decola Tech 2025', icon: '\uD83D\uDE80', color: '#a78bfa' },
+      { name: 'Academia SAP Data & AI', icon: '\uD83E\uDD16', color: '#38bdf8', url: 'https://www.linkedin.com/posts/paulo-rago-a1a090219_recentemente-tive-a-honra-de-ser-selecionado-activity-7345961351170678785-RBER' },
+      { name: 'Monitoria de L\u00F3gica Matem\u00E1tica para Computa\u00E7\u00E3o', icon: '\uD83E\uDDEE', color: '#4ade80' }
     ];
 
     const contacts = [
