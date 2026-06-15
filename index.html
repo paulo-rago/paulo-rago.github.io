@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./vendor/react.production.min.js"></script>
+<script src="./vendor/react-dom.production.min.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:#1a1a2e;cursor:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="26" viewBox="0 0 12 16"><path d="M0 0 L0 14 L4 10 L7 16 L10 15 L7 9 L12 9 Z" fill="%23ffffff" stroke="%23000000" stroke-width="1"/></svg>') 0 0, auto}
+::selection{background:#e94560;color:#fff}
+@keyframes twinkle{0%,100%{opacity:.12}50%{opacity:.9}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes typing{from{width:0}to{width:33ch}}
+@keyframes caret{0%,100%{border-color:#4ade80}50%{border-color:transparent}}
+@keyframes pressblink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes legA{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes legB{0%,49%{opacity:0}50%,100%{opacity:1}}
+@keyframes groundmove{from{background-position:0 0}to{background-position:-32px 0}}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes coinfall{0%{transform:translateY(-25vh) rotate(0);opacity:1}100%{transform:translateY(120vh) rotate(900deg);opacity:1}}
+@keyframes scanmove{from{background-position:0 0}to{background-position:0 6px}}
+.desk-nav{display:flex}
+.mob-btn{display:none}
+@media(max-width:880px){.desk-nav{display:none}.mob-btn{display:flex}}
+</style>
+</helmet>
+<div style="position:relative;width:100%;overflow-x:hidden;background:#1a1a2e;font-family:'Inter',sans-serif;color:#e8e8f5;">
+
+  <!-- starfield -->
+  <div style="position:fixed;inset:0;z-index:0;pointer-events:none;background:#1a1a2e;{{ starStyle }}">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 40px 60px,#fff,transparent),radial-gradient(1.5px 1.5px at 130px 180px,#fff,transparent),radial-gradient(2px 2px at 220px 90px,#f5a623,transparent),radial-gradient(1.5px 1.5px at 300px 240px,#fff,transparent),radial-gradient(1.5px 1.5px at 380px 40px,#4ade80,transparent),radial-gradient(1.5px 1.5px at 90px 300px,#fff,transparent);background-size:420px 360px;animation:twinkle 4s ease-in-out infinite;"></div>
+    <div style="position:absolute;inset:0;background-image:radial-gradient(1.5px 1.5px at 200px 120px,#fff,transparent),radial-gradient(2px 2px at 60px 220px,#e94560,transparent),radial-gradient(1.5px 1.5px at 340px 300px,#fff,transparent),radial-gradient(1.5px 1.5px at 160px 30px,#fff,transparent);background-size:380px 340px;animation:twinkle 6s ease-in-out infinite 1s;"></div>
+  </div>
+
+  <!-- scanlines + vignette -->
+  <div style="{{ scanlineStyle }}"></div>
+  <div style="{{ vignetteStyle }}"></div>
+
+  <!-- NAVBAR -->
+  <nav style="position:fixed;top:0;left:0;right:0;z-index:70;display:flex;align-items:center;justify-content:space-between;height:54px;padding:0 clamp(14px,4vw,40px);background:#0f3460;border-bottom:4px solid #16213e;box-shadow:0 4px 0 rgba(0,0,0,.4);">
+    <div onClick="{{ goHome }}" style="display:flex;align-items:center;gap:10px;">
+      <div style="width:22px;height:22px;background:#e94560;box-shadow:3px 3px 0 #1a1a2e;display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P';font-size:9px;color:#fff;">P</div>
+      <span style="font-family:'Press Start 2P';font-size:12px;color:#f5a623;letter-spacing:1px;">PAULO RAGO</span>
+    </div>
+    <div class="desk-nav" style="align-items:center;gap:clamp(10px,2vw,22px);">
+      <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="7">
+        <a onClick="{{ item.onClick }}" onMouseEnter="{{ item.onMouseEnter }}" onMouseLeave="{{ item.onMouseLeave }}" style="display:flex;align-items:center;gap:5px;font-family:'Press Start 2P';font-size:9px;letter-spacing:1px;color:{{ item.color }};text-decoration:none;white-space:nowrap;transition:color .12s;">
+          <span style="color:#e94560;opacity:{{ item.caretOpacity }};transition:opacity .1s;">&#9654;</span>{{ item.label }}
+        </a>
+      </sc-for>
+    </div>
+    <div onClick="{{ toggleMenu }}" class="mob-btn" style="align-items:center;justify-content:center;width:38px;height:34px;background:#16213e;border:3px solid #e94560;color:#f5a623;font-family:'Press Start 2P';font-size:13px;">&#9776;</div>
+  </nav>
+
+  <!-- MOBILE PAUSE MENU -->
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:90;background:rgba(15,52,96,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:30px;">
+      <div style="font-family:'Press Start 2P';font-size:18px;color:#f5a623;letter-spacing:2px;">&#10074;&#10074; PAUSE</div>
+      <div style="display:flex;flex-direction:column;gap:18px;align-items:center;">
+        <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="7">
+          <a onClick="{{ item.onClick }}" style="display:flex;align-items:center;gap:8px;font-family:'Press Start 2P';font-size:13px;color:#fff;text-decoration:none;">
+            <span style="color:#e94560;">&#9654;</span>{{ item.label }}
+          </a>
+        </sc-for>
+      </div>
+      <div onClick="{{ toggleMenu }}" style="margin-top:14px;font-family:'Press Start 2P';font-size:10px;color:#8a8aa8;border:3px solid #16213e;background:#1a1a2e;padding:10px 16px;">&#10005; FECHAR</div>
+    </div>
+  </sc-if>
+
+  <!-- KONAMI EASTER EGG -->
+  <sc-if value="{{ konami }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:120;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:rgba(26,26,46,0.92);overflow:hidden;">
+      <div style="position:absolute;left:8%;animation:coinfall 1.6s linear infinite;">&#11088;</div>
+      <div style="position:absolute;left:22%;animation:coinfall 1.9s linear infinite .2s;">&#127775;</div>
+      <div style="position:absolute;left:38%;animation:coinfall 1.5s linear infinite .5s;">&#11088;</div>
+      <div style="position:absolute;left:54%;animation:coinfall 2.1s linear infinite .1s;">&#127775;</div>
+      <div style="position:absolute;left:70%;animation:coinfall 1.7s linear infinite .7s;">&#11088;</div>
+      <div style="position:absolute;left:86%;animation:coinfall 1.9s linear infinite .35s;">&#127775;</div>
+      <div style="font-size:64px;animation:spin 1.4s linear infinite;">&#11088;</div>
+      <div style="font-family:'Press Start 2P';font-size:clamp(28px,8vw,56px);color:#4ade80;text-shadow:4px 4px 0 #0f3460;">1-UP!</div>
+      <div style="font-family:'Press Start 2P';font-size:clamp(9px,2.5vw,13px);color:#f5a623;letter-spacing:1px;">MODO DEV DESBLOQUEADO</div>
+      <div style="font-family:'Inter';font-size:13px;color:#8a8aa8;">Você encontrou o easter egg secreto. GG! &#127942;</div>
+    </div>
+  </sc-if>
+
+  <!-- =================== HERO =================== -->
+  <section id="hero" style="position:relative;z-index:1;min-height:100vh;scroll-margin-top:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:90px 20px 60px;">
+    <div style="font-family:'Press Start 2P';font-size:9px;color:#8a8aa8;letter-spacing:2px;margin-bottom:26px;animation:pressblink 2s steps(2) infinite;">&#9733; PLAYER 01 &#9733;</div>
+    <h1 style="font-family:'Press Start 2P';font-size:clamp(34px,11vw,92px);line-height:1.1;color:#f5a623;text-shadow:5px 5px 0 #e94560, 10px 10px 0 rgba(0,0,0,0.45);letter-spacing:2px;margin-bottom:10px;">PAULO<br>RAGO</h1>
+    <div style="height:34px;display:flex;align-items:center;justify-content:center;margin:14px 0 4px;">
+      <span style="display:inline-block;overflow:hidden;white-space:nowrap;border-right:3px solid #4ade80;animation:typing 2.6s steps(33,end) .5s both, caret .75s step-end infinite;font-family:'Press Start 2P';font-size:clamp(8px,2.2vw,13px);color:#4ade80;">Jr. Software Engineer @ NTT DATA</span>
+    </div>
+
+    <!-- sprite + ground -->
+    <div style="display:flex;flex-direction:column;align-items:center;margin:38px 0 30px;">
+      <div style="display:flex;align-items:flex-end;justify-content:center;gap:clamp(0px,1.2vw,12px);">
+        <div style="animation:bob 0.55s steps(2) infinite .12s;">
+          <svg viewBox="0 0 72 52" width="86" height="62" style="image-rendering:pixelated;display:block;filter:drop-shadow(3px 4px 0 rgba(0,0,0,0.35));">
+            <rect x="6" y="12" width="8" height="6" fill="#f4f4ef"/>
+            <rect x="4" y="16" width="6" height="10" fill="#e2e2db"/>
+            <rect x="8" y="20" width="8" height="8" fill="#f4f4ef"/>
+            <rect x="14" y="22" width="34" height="16" fill="#f4f4ef"/>
+            <rect x="14" y="34" width="34" height="4" fill="#dcdcd5"/>
+            <rect x="44" y="24" width="8" height="14" fill="#f4f4ef"/>
+            <rect x="46" y="12" width="16" height="16" fill="#f4f4ef"/>
+            <rect x="48" y="4" width="6" height="10" fill="#f4f4ef"/>
+            <rect x="49" y="7" width="3" height="5" fill="#e6b8b0"/>
+            <rect x="55" y="5" width="5" height="8" fill="#e2e2db"/>
+            <rect x="60" y="18" width="10" height="8" fill="#f4f4ef"/>
+            <rect x="68" y="18" width="3" height="4" fill="#1a1a1a"/>
+            <rect x="60" y="26" width="9" height="2" fill="#dcdcd5"/>
+            <rect x="54" y="16" width="3" height="3" fill="#1a1a1a"/>
+            <rect x="44" y="38" width="5" height="12" fill="#f4f4ef"/>
+            <rect x="38" y="38" width="5" height="12" fill="#e2e2db"/>
+            <rect x="18" y="38" width="5" height="12" fill="#f4f4ef"/>
+            <rect x="24" y="38" width="5" height="12" fill="#e2e2db"/>
+          </svg>
+        </div>
+        <div style="animation:bob 0.55s steps(2) infinite;">
+          <svg viewBox="0 0 96 132" width="126" height="173" style="image-rendering:pixelated;display:block;filter:drop-shadow(4px 6px 0 rgba(0,0,0,0.4));">
+            <rect x="32" y="16" width="32" height="10" fill="#16100b"/>
+            <rect x="30" y="24" width="4" height="14" fill="#16100b"/>
+            <rect x="62" y="24" width="4" height="14" fill="#16100b"/>
+            <rect x="34" y="24" width="28" height="5" fill="#1e1610"/>
+            <rect x="34" y="18" width="10" height="4" fill="#2e2016"/>
+            <rect x="40" y="26" width="6" height="3" fill="#16100b"/>
+            <rect x="52" y="26" width="6" height="3" fill="#16100b"/>
+            <rect x="34" y="28" width="28" height="26" fill="#d7a36b"/>
+            <rect x="56" y="30" width="6" height="22" fill="#c08c54"/>
+            <rect x="36" y="33" width="9" height="2" fill="#16100b"/>
+            <rect x="51" y="33" width="9" height="2" fill="#16100b"/>
+            <rect x="37" y="36" width="8" height="4" fill="#f2f2f2"/>
+            <rect x="40" y="36" width="3" height="4" fill="#241a12"/>
+            <rect x="51" y="36" width="8" height="4" fill="#f2f2f2"/>
+            <rect x="54" y="36" width="3" height="4" fill="#241a12"/>
+            <rect x="46" y="40" width="4" height="6" fill="#c08c54"/>
+            <rect x="34" y="42" width="6" height="14" fill="#2b2018"/>
+            <rect x="56" y="42" width="6" height="14" fill="#241a12"/>
+            <rect x="36" y="46" width="24" height="12" fill="#2b2018"/>
+            <rect x="42" y="44" width="12" height="3" fill="#2b2018"/>
+            <rect x="38" y="50" width="7" height="6" fill="#3a2c20"/>
+            <rect x="44" y="47" width="8" height="2" fill="#7a4a3a"/>
+            <rect x="42" y="56" width="12" height="6" fill="#c08c54"/>
+            <rect x="28" y="60" width="40" height="38" fill="#1b1b22"/>
+            <rect x="40" y="60" width="16" height="4" fill="#101015"/>
+            <rect x="30" y="62" width="6" height="34" fill="#26262f"/>
+            <rect x="24" y="62" width="6" height="14" fill="#1b1b22"/>
+            <rect x="66" y="62" width="6" height="14" fill="#1b1b22"/>
+            <rect x="24" y="76" width="6" height="16" fill="#d7a36b"/>
+            <rect x="66" y="76" width="6" height="16" fill="#c08c54"/>
+            <rect x="23" y="90" width="8" height="6" fill="#c08c54"/>
+            <rect x="65" y="90" width="8" height="6" fill="#b9824f"/>
+            <g style="animation:legA 0.55s steps(1) infinite;">
+              <rect x="34" y="98" width="12" height="26" fill="#2c3b5e"/>
+              <rect x="50" y="98" width="12" height="22" fill="#26334f"/>
+              <rect x="32" y="124" width="15" height="6" fill="#ececf0"/>
+              <rect x="50" y="120" width="15" height="6" fill="#dcdce4"/>
+            </g>
+            <g style="animation:legB 0.55s steps(1) infinite;">
+              <rect x="34" y="98" width="12" height="22" fill="#2c3b5e"/>
+              <rect x="50" y="98" width="12" height="26" fill="#26334f"/>
+              <rect x="32" y="120" width="15" height="6" fill="#ececf0"/>
+              <rect x="50" y="124" width="15" height="6" fill="#dcdce4"/>
+            </g>
+          </svg>
+        </div>
+        <div style="animation:bob 0.55s steps(2) infinite .26s;transform:scaleX(-1);">
+          <svg viewBox="0 0 72 52" width="86" height="62" style="image-rendering:pixelated;display:block;filter:drop-shadow(3px 4px 0 rgba(0,0,0,0.35));">
+            <rect x="6" y="12" width="8" height="6" fill="#f4f4ef"/>
+            <rect x="4" y="16" width="6" height="10" fill="#e2e2db"/>
+            <rect x="8" y="20" width="8" height="8" fill="#f4f4ef"/>
+            <rect x="14" y="22" width="34" height="16" fill="#f4f4ef"/>
+            <rect x="14" y="34" width="34" height="4" fill="#dcdcd5"/>
+            <rect x="44" y="24" width="8" height="14" fill="#f4f4ef"/>
+            <rect x="46" y="12" width="16" height="16" fill="#f4f4ef"/>
+            <rect x="48" y="4" width="6" height="10" fill="#f4f4ef"/>
+            <rect x="49" y="7" width="3" height="5" fill="#e6b8b0"/>
+            <rect x="55" y="5" width="5" height="8" fill="#e2e2db"/>
+            <rect x="60" y="18" width="10" height="8" fill="#f4f4ef"/>
+            <rect x="68" y="18" width="3" height="4" fill="#1a1a1a"/>
+            <rect x="60" y="26" width="9" height="2" fill="#dcdcd5"/>
+            <rect x="54" y="16" width="3" height="3" fill="#1a1a1a"/>
+            <rect x="44" y="38" width="5" height="12" fill="#f4f4ef"/>
+            <rect x="38" y="38" width="5" height="12" fill="#e2e2db"/>
+            <rect x="18" y="38" width="5" height="12" fill="#f4f4ef"/>
+            <rect x="24" y="38" width="5" height="12" fill="#e2e2db"/>
+          </svg>
+        </div>
+      </div>
+      <div style="width:clamp(290px,74vw,460px);height:22px;margin-top:2px;border-top:4px solid #4ade80;background:repeating-linear-gradient(90deg,#0f3460 0,#0f3460 14px,#16213e 14px,#16213e 32px);background-size:32px 22px;animation:groundmove .4s linear infinite;box-shadow:0 4px 0 rgba(0,0,0,0.4);"></div>
+    </div>
+
+    <button onClick="{{ pressStart }}" onMouseEnter="{{ playBlip }}" style="font-family:'Press Start 2P';font-size:clamp(11px,3vw,16px);color:#fff;background:#e94560;border:4px solid #fff;padding:16px 28px;cursor:inherit;box-shadow:6px 6px 0 #0f3460;animation:pressblink 1.4s steps(2) infinite;letter-spacing:1px;">&#9654; PRESS START</button>
+    <div style="margin-top:36px;font-family:'Press Start 2P';font-size:8px;color:#533483;letter-spacing:1px;">&#9660; SCROLL PARA CONTINUAR &#9660;</div>
+  </section>
+
+  <!-- =================== SOBRE =================== -->
+  <section id="sobre" style="position:relative;z-index:1;scroll-margin-top:54px;padding:70px clamp(16px,5vw,40px);max-width:1080px;margin:0 auto;">
+    <div style="font-family:'Press Start 2P';font-size:clamp(15px,4vw,24px);color:#f5a623;margin-bottom:8px;text-shadow:3px 3px 0 #0f3460;">STATUS DO PERSONAGEM</div>
+    <div style="width:80px;height:5px;background:#e94560;margin-bottom:34px;"></div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:26px;align-items:stretch;">
+      <!-- avatar card -->
+      <div style="flex:1 1 240px;min-width:240px;background:#16213e;border:4px solid #0f3460;box-shadow:8px 8px 0 rgba(0,0,0,0.4);padding:22px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <div style="font-family:'Press Start 2P';font-size:9px;color:#4ade80;letter-spacing:1px;">&#9733; TRAINER CARD</div>
+        <div style="width:100%;aspect-ratio:1;background:linear-gradient(180deg,#0f3460,#1a1a2e);border:4px solid #533483;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 4px #16213e;">
+          <svg viewBox="0 0 96 132" width="118" height="162" style="image-rendering:pixelated;display:block;">
+            <rect x="32" y="16" width="32" height="10" fill="#16100b"/>
+            <rect x="30" y="24" width="4" height="14" fill="#16100b"/>
+            <rect x="62" y="24" width="4" height="14" fill="#16100b"/>
+            <rect x="34" y="24" width="28" height="5" fill="#1e1610"/>
+            <rect x="34" y="18" width="10" height="4" fill="#2e2016"/>
+            <rect x="40" y="26" width="6" height="3" fill="#16100b"/>
+            <rect x="52" y="26" width="6" height="3" fill="#16100b"/>
+            <rect x="34" y="28" width="28" height="26" fill="#d7a36b"/>
+            <rect x="56" y="30" width="6" height="22" fill="#c08c54"/>
+            <rect x="36" y="33" width="9" height="2" fill="#16100b"/>
+            <rect x="51" y="33" width="9" height="2" fill="#16100b"/>
+            <rect x="37" y="36" width="8" height="4" fill="#f2f2f2"/>
+            <rect x="40" y="36" width="3" height="4" fill="#241a12"/>
+            <rect x="51" y="36" width="8" height="4" fill="#f2f2f2"/>
+            <rect x="54" y="36" width="3" height="4" fill="#241a12"/>
+            <rect x="46" y="40" width="4" height="6" fill="#c08c54"/>
+            <rect x="34" y="42" width="6" height="14" fill="#2b2018"/>
+            <rect x="56" y="42" width="6" height="14" fill="#241a12"/>
+            <rect x="36" y="46" width="24" height="12" fill="#2b2018"/>
+            <rect x="42" y="44" width="12" height="3" fill="#2b2018"/>
+            <rect x="38" y="50" width="7" height="6" fill="#3a2c20"/>
+            <rect x="44" y="47" width="8" height="2" fill="#7a4a3a"/>
+            <rect x="42" y="56" width="12" height="6" fill="#c08c54"/>
+            <rect x="28" y="60" width="40" height="38" fill="#1b1b22"/>
+            <rect x="40" y="60" width="16" height="4" fill="#101015"/>
+            <rect x="30" y="62" width="6" height="34" fill="#26262f"/>
+            <rect x="24" y="62" width="6" height="14" fill="#1b1b22"/>
+            <rect x="66" y="62" width="6" height="14" fill="#1b1b22"/>
+            <rect x="24" y="76" width="6" height="16" fill="#d7a36b"/>
+            <rect x="66" y="76" width="6" height="16" fill="#c08c54"/>
+            <rect x="23" y="90" width="8" height="6" fill="#c08c54"/>
+            <rect x="65" y="90" width="8" height="6" fill="#b9824f"/>
+            <rect x="34" y="98" width="12" height="26" fill="#2c3b5e"/>
+            <rect x="50" y="98" width="12" height="26" fill="#26334f"/>
+            <rect x="32" y="124" width="15" height="6" fill="#ececf0"/>
+            <rect x="50" y="124" width="15" height="6" fill="#dcdce4"/>
+          </svg>
+        </div>
+        <div style="font-family:'Press Start 2P';font-size:11px;color:#fff;text-align:center;">PAULO R. RAGO</div>
+        <div style="font-family:'Inter';font-size:12px;color:#8a8aa8;">ID #2027-CESAR</div>
+      </div>
+
+      <!-- attributes -->
+      <div style="flex:2 1 380px;min-width:300px;background:#16213e;border:4px solid #0f3460;box-shadow:8px 8px 0 rgba(0,0,0,0.4);padding:26px;display:flex;flex-direction:column;gap:16px;">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;"><span style="font-family:'Press Start 2P';font-size:9px;color:#e94560;min-width:96px;">NOME</span><span style="font-family:'Inter';font-size:15px;color:#fff;font-weight:600;">Paulo Ricardo Rago</span></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;"><span style="font-family:'Press Start 2P';font-size:9px;color:#e94560;min-width:96px;">N&Iacute;VEL</span><span style="font-family:'Inter';font-size:15px;color:#fff;">6&ordm; semestre &middot; CESAR School &middot; formatura 2027</span></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;"><span style="font-family:'Press Start 2P';font-size:9px;color:#e94560;min-width:96px;">CLASSE</span><span style="font-family:'Inter';font-size:15px;color:#fff;">Jr. Software Engineer</span></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;"><span style="font-family:'Press Start 2P';font-size:9px;color:#e94560;min-width:96px;">LOCAL</span><span style="font-family:'Inter';font-size:15px;color:#fff;">Recife, PE &middot; Brasil</span></div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:baseline;"><span style="font-family:'Press Start 2P';font-size:9px;color:#e94560;min-width:96px;">MISS&Atilde;O</span><span style="font-family:'Inter';font-size:15px;color:#cfcfe6;max-width:420px;line-height:1.5;">Construir solu&ccedil;&otilde;es inovadoras em desenvolvimento de software e IA.</span></div>
+
+        <div style="height:3px;background:#0f3460;margin:6px 0;"></div>
+
+        <!-- XP bars -->
+        <div style="display:flex;flex-direction:column;gap:13px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-family:'Press Start 2P';font-size:8px;color:#8a8aa8;margin-bottom:5px;"><span>BACK-END</span><span style="color:#4ade80;">LV 80</span></div>
+            <div style="height:14px;background:#0f3460;border:2px solid #533483;padding:1px;"><div style="height:100%;width:80%;background:repeating-linear-gradient(90deg,#4ade80 0,#4ade80 8px,#36b765 8px,#36b765 10px);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-family:'Press Start 2P';font-size:8px;color:#8a8aa8;margin-bottom:5px;"><span>FRONT-END</span><span style="color:#f5a623;">LV 65</span></div>
+            <div style="height:14px;background:#0f3460;border:2px solid #533483;padding:1px;"><div style="height:100%;width:65%;background:repeating-linear-gradient(90deg,#f5a623 0,#f5a623 8px,#d4881a 8px,#d4881a 10px);"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-family:'Press Start 2P';font-size:8px;color:#8a8aa8;margin-bottom:5px;"><span>PROBLEM SOLVING</span><span style="color:#e94560;">LV 75</span></div>
+            <div style="height:14px;background:#0f3460;border:2px solid #533483;padding:1px;"><div style="height:100%;width:75%;background:repeating-linear-gradient(90deg,#e94560 0,#e94560 8px,#c4344f 8px,#c4344f 10px);"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== SKILLS =================== -->
+  <section id="skills" style="position:relative;z-index:1;scroll-margin-top:54px;padding:70px clamp(16px,5vw,40px);max-width:1080px;margin:0 auto;">
+    <div style="font-family:'Press Start 2P';font-size:clamp(15px,4vw,24px);color:#f5a623;margin-bottom:8px;text-shadow:3px 3px 0 #0f3460;">INVENT&Aacute;RIO &middot; MOVESET</div>
+    <div style="width:80px;height:5px;background:#4ade80;margin-bottom:14px;"></div>
+    <div style="font-family:'Inter';font-size:13px;color:#8a8aa8;margin-bottom:30px;">Passe o mouse sobre um item para inspecionar &#9654;</div>
+
+    <div style="display:flex;flex-direction:column;gap:30px;">
+      <sc-for list="{{ skillCats }}" as="cat" hint-placeholder-count="5">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <div style="width:14px;height:14px;background:{{ cat.color }};box-shadow:2px 2px 0 #0f3460;"></div>
+            <span style="font-family:'Press Start 2P';font-size:11px;color:#fff;letter-spacing:1px;">{{ cat.cat }}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;">
+            <sc-for list="{{ cat.items }}" as="sk" hint-placeholder-count="2">
+              <div onMouseEnter="{{ sk.onEnter }}" onMouseMove="{{ sk.onMove }}" onMouseLeave="{{ sk.onLeave }}" style="background:#16213e;border:3px solid #0f3460;padding:13px;display:flex;flex-direction:column;gap:9px;box-shadow:4px 4px 0 rgba(0,0,0,0.35);transition:transform .1s;" style-hover="transform:translate(-2px,-2px);border-color:{{ sk.color }};">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div style="width:30px;height:30px;flex-shrink:0;background:{{ sk.color }};display:flex;align-items:center;justify-content:center;font-family:'Press Start 2P';font-size:11px;color:#1a1a2e;box-shadow:2px 2px 0 #0f3460;">{{ sk.letter }}</div>
+                  <span style="font-family:'Inter';font-size:14px;font-weight:600;color:#fff;">{{ sk.n }}</span>
+                </div>
+                <div style="font-family:'Press Start 2P';font-size:11px;color:{{ sk.color }};letter-spacing:2px;">{{ sk.stars }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- =================== JORNADA =================== -->
+  <section id="jornada" style="position:relative;z-index:1;scroll-margin-top:54px;padding:70px clamp(16px,5vw,40px);max-width:920px;margin:0 auto;">
+    <div style="font-family:'Press Start 2P';font-size:clamp(15px,4vw,24px);color:#f5a623;margin-bottom:8px;text-shadow:3px 3px 0 #0f3460;">MAPA DE FASES</div>
+    <div style="width:80px;height:5px;background:#e94560;margin-bottom:34px;"></div>
+
+    <div style="position:relative;display:flex;flex-direction:column;gap:24px;padding-left:34px;border-left:5px dashed #533483;margin-left:6px;">
+      <!-- fase 2 (current first) -->
+      <div style="position:relative;">
+        <div style="position:absolute;left:-50px;top:6px;width:26px;height:26px;background:#4ade80;border:4px solid #16213e;box-shadow:0 0 0 3px #4ade80,2px 2px 0 rgba(0,0,0,.4);animation:float 2.4s ease-in-out infinite;"></div>
+        <div style="background:#16213e;border:4px solid #4ade80;box-shadow:8px 8px 0 rgba(0,0,0,0.4);padding:20px;">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <span style="font-family:'Press Start 2P';font-size:9px;color:#4ade80;">FASE 2</span>
+            <span style="font-family:'Press Start 2P';font-size:8px;color:#1a1a2e;background:#4ade80;padding:5px 8px;">IN PROGRESS &#9889;</span>
+          </div>
+          <div style="font-family:'Inter';font-size:18px;font-weight:700;color:#fff;">NTT DATA Brasil</div>
+          <div style="font-family:'Inter';font-size:14px;color:#f5a623;margin:3px 0 6px;">Engenheiro de Software J&uacute;nior</div>
+          <div style="font-family:'Press Start 2P';font-size:8px;color:#8a8aa8;margin-bottom:10px;">FEV/2026 &mdash; PRESENTE</div>
+          <div style="font-family:'Inter';font-size:13px;color:#cfcfe6;line-height:1.6;">Desenvolvimento de software construindo solu&ccedil;&otilde;es back-end e front-end em ambiente corporativo.</div>
+        </div>
+      </div>
+      <!-- fase 1 -->
+      <div style="position:relative;">
+        <div style="position:absolute;left:-49px;top:6px;width:24px;height:24px;background:#f5a623;border:4px solid #16213e;box-shadow:0 0 0 3px #f5a623,2px 2px 0 rgba(0,0,0,.4);"></div>
+        <div style="background:#16213e;border:4px solid #0f3460;box-shadow:8px 8px 0 rgba(0,0,0,0.4);padding:20px;">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <span style="font-family:'Press Start 2P';font-size:9px;color:#f5a623;">FASE 1</span>
+            <span style="font-family:'Press Start 2P';font-size:8px;color:#1a1a2e;background:#f5a623;padding:5px 8px;">COMPLETED &#9733;</span>
+          </div>
+          <div style="font-family:'Inter';font-size:18px;font-weight:700;color:#fff;">Accenture Brasil</div>
+          <div style="font-family:'Inter';font-size:14px;color:#f5a623;margin:3px 0 6px;">Analista SAP</div>
+          <div style="font-family:'Press Start 2P';font-size:8px;color:#8a8aa8;margin-bottom:10px;">AGO/2025 &mdash; JAN/2026</div>
+          <div style="font-family:'Inter';font-size:13px;color:#cfcfe6;line-height:1.6;">In&iacute;cio da jornada corporativa atuando com o ecossistema SAP.</div>
+        </div>
+      </div>
+      <!-- bonus -->
+      <div style="position:relative;">
+        <div style="position:absolute;left:-49px;top:6px;width:24px;height:24px;background:#533483;border:4px solid #16213e;box-shadow:0 0 0 3px #533483,2px 2px 0 rgba(0,0,0,.4);"></div>
+        <div style="background:#16213e;border:4px solid #0f3460;box-shadow:8px 8px 0 rgba(0,0,0,0.4);padding:20px;">
+          <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;">
+            <span style="font-family:'Press Start 2P';font-size:9px;color:#a78bfa;">FASE B&Ocirc;NUS</span>
+            <span style="font-family:'Press Start 2P';font-size:8px;color:#fff;background:#533483;padding:5px 8px;">IN PROGRESS</span>
+          </div>
+          <div style="font-family:'Inter';font-size:18px;font-weight:700;color:#fff;">CESAR School</div>
+          <div style="font-family:'Inter';font-size:14px;color:#a78bfa;margin:3px 0 6px;">Bacharelado em Ci&ecirc;ncia da Computa&ccedil;&atilde;o</div>
+          <div style="font-family:'Press Start 2P';font-size:8px;color:#8a8aa8;margin-bottom:10px;">2023 &mdash; 2027</div>
+          <div style="font-family:'Inter';font-size:13px;color:#cfcfe6;line-height:1.6;">Forma&ccedil;&atilde;o acad&ecirc;mica em desenvolvimento de software, algoritmos e engenharia.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== PROJETOS =================== -->
+  <section id="projetos" style="position:relative;z-index:1;scroll-margin-top:54px;padding:70px clamp(16px,5vw,40px);max-width:1080px;margin:0 auto;">
+    <div style="font-family:'Press Start 2P';font-size:clamp(15px,4vw,24px);color:#f5a623;margin-bottom:8px;text-shadow:3px 3px 0 #0f3460;">CHEFES DERROTADOS</div>
+    <div style="width:80px;height:5px;background:#f5a623;margin-bottom:34px;"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+      <sc-for list="{{ projects }}" as="p" hint-placeholder-count="5">
+        <div style="background:#16213e;border:4px solid #0f3460;box-shadow:8px 8px 0 rgba(0,0,0,0.4);padding:20px;display:flex;flex-direction:column;gap:12px;transition:transform .12s;" style-hover="transform:translate(-3px,-3px);border-color:#e94560;">
+          <div style="font-family:'Press Start 2P';font-size:8px;color:#e94560;letter-spacing:1px;">&#9760; BOSS DEFEATED</div>
+          <div style="font-family:'Press Start 2P';font-size:12px;color:#fff;line-height:1.5;">{{ p.name }}</div>
+          <div style="font-family:'Inter';font-size:13px;color:#cfcfe6;line-height:1.5;">{{ p.desc }}</div>
+          <div style="font-family:'Press Start 2P';font-size:7px;color:#8a8aa8;letter-spacing:1px;margin-top:2px;">TIPO DO BOSS</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <sc-for list="{{ p.tech }}" as="t" hint-placeholder-count="4">
+              <span style="font-family:'Inter';font-size:11px;font-weight:600;color:#f5a623;background:#0f3460;border:2px solid #533483;padding:3px 7px;">{{ t }}</span>
+            </sc-for>
+          </div>
+          <a href="{{ p.url }}" target="_blank" rel="noopener" onMouseEnter="{{ playBlip }}" style="margin-top:6px;display:inline-flex;align-items:center;gap:8px;font-family:'Press Start 2P';font-size:8px;color:#1a1a2e;background:#4ade80;border:3px solid #16213e;padding:9px 11px;text-decoration:none;align-self:flex-start;box-shadow:3px 3px 0 #0f3460;">&#127942; COLETAR RECOMPENSA</a>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- =================== CONQUISTAS =================== -->
+  <section id="conquistas" style="position:relative;z-index:1;scroll-margin-top:54px;padding:70px clamp(16px,5vw,40px);max-width:1080px;margin:0 auto;">
+    <div style="font-family:'Press Start 2P';font-size:clamp(15px,4vw,24px);color:#f5a623;margin-bottom:8px;text-shadow:3px 3px 0 #0f3460;">ACHIEVEMENTS</div>
+    <div style="width:80px;height:5px;background:#4ade80;margin-bottom:34px;"></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;">
+      <sc-for list="{{ certs }}" as="c" hint-placeholder-count="5">
+        <div style="background:#16213e;border:3px solid #0f3460;box-shadow:5px 5px 0 rgba(0,0,0,0.4);padding:16px;display:flex;align-items:center;gap:14px;transition:transform .1s;" style-hover="transform:translateY(-3px);border-color:#f5a623;">
+          <div style="width:46px;height:46px;flex-shrink:0;background:{{ c.color }};display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:3px 3px 0 #0f3460;">{{ c.icon }}</div>
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <span style="font-family:'Press Start 2P';font-size:7px;color:#4ade80;letter-spacing:1px;">UNLOCKED</span>
+            <span style="font-family:'Inter';font-size:13px;font-weight:600;color:#fff;line-height:1.4;">{{ c.name }}</span>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- =================== CONTATO =================== -->
+  <section id="contato" style="position:relative;z-index:1;scroll-margin-top:54px;padding:70px clamp(16px,5vw,40px) 40px;max-width:760px;margin:0 auto;">
+    <div style="font-family:'Press Start 2P';font-size:clamp(15px,4vw,24px);color:#f5a623;margin-bottom:8px;text-shadow:3px 3px 0 #0f3460;text-align:center;">SALVAR PROGRESSO</div>
+    <div style="width:80px;height:5px;background:#e94560;margin:0 auto 14px;"></div>
+    <div style="font-family:'Inter';font-size:13px;color:#8a8aa8;text-align:center;margin-bottom:30px;">Selecione um slot para conectar &#9654;</div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <sc-for list="{{ contacts }}" as="s" hint-placeholder-count="3">
+        <a href="{{ s.url }}" target="_blank" rel="noopener" onMouseEnter="{{ playBlip }}" style="display:flex;align-items:center;gap:16px;background:#16213e;border:4px solid #0f3460;box-shadow:6px 6px 0 rgba(0,0,0,0.4);padding:16px 18px;text-decoration:none;transition:transform .1s;" style-hover="transform:translate(-3px,-3px);border-color:#4ade80;">
+          <div style="width:46px;height:46px;flex-shrink:0;background:{{ s.color }};display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:3px 3px 0 #0f3460;">{{ s.icon }}</div>
+          <div style="display:flex;flex-direction:column;gap:5px;min-width:0;">
+            <span style="font-family:'Press Start 2P';font-size:9px;color:#f5a623;">{{ s.label }}</span>
+            <span style="font-family:'Inter';font-size:13px;color:#cfcfe6;word-break:break-all;">{{ s.value }}</span>
+          </div>
+          <span style="margin-left:auto;font-family:'Press Start 2P';font-size:9px;color:#4ade80;">&#9654;</span>
+        </a>
+      </sc-for>
+    </div>
+
+    <div style="text-align:center;margin-top:46px;font-family:'Press Start 2P';font-size:8px;color:#533483;line-height:2;letter-spacing:1px;">
+      &copy; 2026 PAULO RAGO &middot; RECIFE-PE<br>
+      <span style="color:#8a8aa8;">FEITO COM &#9829; &amp; PIXELS</span>
+    </div>
+  </section>
+
+  <!-- SOUND TOGGLE -->
+  <div onClick="{{ toggleSound }}" style="position:fixed;right:16px;bottom:16px;z-index:75;display:flex;align-items:center;gap:8px;background:#0f3460;border:3px solid {{ soundColor }};padding:10px 12px;box-shadow:4px 4px 0 rgba(0,0,0,0.5);">
+    <span style="font-family:'Press Start 2P';font-size:13px;color:{{ soundColor }};">{{ soundIcon }}</span>
+    <span style="font-family:'Press Start 2P';font-size:8px;color:{{ soundColor }};letter-spacing:1px;">{{ soundLabel }}</span>
+  </div>
+
+  <!-- SKILL TOOLTIP -->
+  <div style="{{ tipStyle }}">{{ tipText }}</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;scanlines&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;crtVignette&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;starfield&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hoverNav: null, activeSection: 'hero', menuOpen: false, soundOn: true, konami: false, tip: null };
+    this.audioCtx = null;
+    this.konamiSeq = [];
+    this.KONAMI = ['arrowup','arrowup','arrowdown','arrowdown','arrowleft','arrowright','arrowleft','arrowright','b','a'];
+  }
+
+  componentDidMount() {
+    this._onKey = (e) => {
+      const k = (e.key || '').toLowerCase();
+      this.konamiSeq.push(k);
+      this.konamiSeq = this.konamiSeq.slice(-this.KONAMI.length);
+      if (this.konamiSeq.length === this.KONAMI.length && this.KONAMI.every((v, i) => v === this.konamiSeq[i])) {
+        this.triggerKonami();
+      }
+    };
+    window.addEventListener('keydown', this._onKey);
+    const ids = ['hero','sobre','skills','jornada','projetos','conquistas','contato'];
+    this._obs = new IntersectionObserver((entries) => {
+      entries.forEach((en) => { if (en.isIntersecting) this.setState({ activeSection: en.target.id }); });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+    ids.forEach((id) => { const el = document.getElementById(id); if (el) this._obs.observe(el); });
+  }
+
+  componentWillUnmount() {
+    if (this._onKey) window.removeEventListener('keydown', this._onKey);
+    if (this._obs) this._obs.disconnect();
+    if (this._kt) clearTimeout(this._kt);
+  }
+
+  ensureAudio() {
+    if (!this.audioCtx) {
+      try { this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {}
+    }
+    return this.audioCtx;
+  }
+
+  beep(freq, dur, type) {
+    if (!this.state.soundOn) return;
+    const ctx = this.ensureAudio();
+    if (!ctx) return;
+    if (ctx.state === 'suspended') ctx.resume();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type || 'square';
+    o.frequency.value = freq || 440;
+    o.connect(g); g.connect(ctx.destination);
+    const t = ctx.currentTime;
+    g.gain.setValueAtTime(0.04, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.08));
+    o.start(t); o.stop(t + (dur || 0.08));
+  }
+
+  playBlip() { this.beep(660, 0.06, 'square'); }
+  playSelect() { this.beep(880, 0.08, 'square'); setTimeout(() => this.beep(1175, 0.09, 'square'), 70); }
+
+  scrollTo(id) {
+    this.playSelect();
+    this.setState({ menuOpen: false });
+    const el = document.getElementById(id);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 54;
+    window.scrollTo({ top, behavior: 'smooth' });
+  }
+
+  toggleSound() {
+    const on = !this.state.soundOn;
+    this.setState({ soundOn: on });
+    if (on) { this.audioCtx = this.audioCtx || this.ensureAudio(); this.beep(880, 0.08); }
+  }
+
+  toggleMenu() { this.setState((s) => ({ menuOpen: !s.menuOpen })); this.beep(523, 0.06); }
+
+  triggerKonami() {
+    this.setState({ konami: true });
+    const notes = [523, 659, 784, 1047, 784, 1047, 1319];
+    notes.forEach((n, i) => setTimeout(() => this.beep(n, 0.14, 'square'), i * 130));
+    if (this._kt) clearTimeout(this._kt);
+    this._kt = setTimeout(() => this.setState({ konami: false }), 5200);
+  }
+
+  renderVals() {
+    const nav = [
+      { id: 'hero', label: 'IN\u00CDCIO' },
+      { id: 'sobre', label: 'SOBRE' },
+      { id: 'skills', label: 'SKILLS' },
+      { id: 'jornada', label: 'JORNADA' },
+      { id: 'projetos', label: 'PROJETOS' },
+      { id: 'conquistas', label: 'CONQUISTAS' },
+      { id: 'contato', label: 'CONTATO' }
+    ];
+    const navItems = nav.map((n) => {
+      const active = this.state.activeSection === n.id;
+      const hover = this.state.hoverNav === n.id;
+      return {
+        id: n.id, label: n.label,
+        color: active ? '#f5a623' : (hover ? '#ffffff' : '#8a8aa8'),
+        caretOpacity: (active || hover) ? '1' : '0',
+        onClick: () => this.scrollTo(n.id),
+        onMouseEnter: () => { this.setState({ hoverNav: n.id }); this.playBlip(); },
+        onMouseLeave: () => this.setState({ hoverNav: null })
+      };
+    });
+
+    const star = (lv) => '\u2605'.repeat(lv) + '\u2606'.repeat(5 - lv);
+    const rawCats = [
+      { cat: 'BACK-END', color: '#e94560', items: [
+        { n: 'Java', lv: 4, d: 'Linguagem principal \u2014 APIs robustas e orienta\u00E7\u00E3o a objetos.' },
+        { n: 'Spring Framework', lv: 4, d: 'Spring Boot 3, Security & JWT para back-ends escal\u00E1veis.' },
+        { n: 'Nest.js', lv: 3, d: 'Framework Node.js para APIs escal\u00E1veis e modulares.' },
+        { n: 'FastAPI', lv: 3, d: 'APIs Python r\u00E1pidas e ass\u00EDncronas.' }
+      ]},
+      { cat: 'FRONT-END', color: '#4ade80', items: [
+        { n: 'React.js', lv: 3, d: 'Interfaces componentizadas e reativas.' },
+        { n: 'TypeScript', lv: 3, d: 'JavaScript tipado para c\u00F3digo mais seguro.' },
+        { n: 'JavaScript', lv: 3, d: 'A base da web \u2014 l\u00F3gica e interatividade.' }
+      ]},
+      { cat: 'DEVOPS / CLOUD', color: '#f5a623', items: [
+        { n: 'Kubernetes', lv: 2, d: 'Orquestra\u00E7\u00E3o de containers em produ\u00E7\u00E3o.' },
+        { n: 'Docker', lv: 2, d: 'Containeriza\u00E7\u00E3o de aplica\u00E7\u00F5es.' }
+      ]},
+      { cat: 'DADOS', color: '#a78bfa', items: [
+        { n: 'Python', lv: 2, d: 'Scripts, automa\u00E7\u00E3o e an\u00E1lise de dados.' },
+        { n: 'Pandas', lv: 2, d: 'Manipula\u00E7\u00E3o e an\u00E1lise de datasets.' }
+      ]},
+      { cat: 'BANCO DE DADOS', color: '#38bdf8', items: [
+        { n: 'MySQL', lv: 3, d: 'Modelagem e consultas relacionais.' },
+        { n: 'PostgreSQL', lv: 3, d: 'Banco relacional robusto para aplica\u00E7\u00F5es em produ\u00E7\u00E3o.' }
+      ]}
+    ];
+    const skillCats = rawCats.map((c) => ({
+      cat: c.cat, color: c.color,
+      items: c.items.map((it) => ({
+        n: it.n, stars: star(it.lv), color: c.color, letter: it.n.charAt(0).toUpperCase(),
+        onEnter: (e) => { this.setState({ tip: { text: it.d, x: e.clientX, y: e.clientY } }); this.playBlip(); },
+        onMove: (e) => { const x = e.clientX, y = e.clientY; this.setState((s) => (s.tip ? { tip: { text: s.tip.text, x, y } } : null)); },
+        onLeave: () => this.setState({ tip: null })
+      }))
+    }));
+
+    const projects = [
+      { name: 'PORTAL DO LICITANTE', desc: 'Sistema de gest\u00E3o licitat\u00F3ria de ponta a ponta.', tech: ['Java 17','Spring Boot 3','JWT','MySQL','React','Kubernetes'], url: 'https://github.com/paulo-rago' },
+      { name: 'ROCKET STORE', desc: 'E-commerce simulado com checkout completo.', tech: ['React','TypeScript','Vite','Tailwind','React Hook Form'], url: 'https://github.com/paulo-rago' },
+      { name: 'RECILUZ', desc: 'IoT de ilumina\u00E7\u00E3o p\u00FAblica inteligente.', tech: ['ESP32','Node-RED','FastAPI','React','MQTT'], url: 'https://github.com/paulo-rago/Projeto-SE-Grupo-8' },
+      { name: 'BACKEND ROCKETCORP', desc: 'API back-end desenvolvida em equipe.', tech: ['TypeScript'], url: 'https://github.com/paulo-rago/backend_rocketcorp' },
+      { name: 'DECOLA TECH 2025', desc: 'Projeto do bootcamp Decola Tech.', tech: ['Java'], url: 'https://github.com/paulo-rago/decola-tech-2025' }
+    ];
+
+    const certs = [
+      { name: 'Kubernetes Fundamentals', icon: '\u2638\uFE0F', color: '#38bdf8' },
+      { name: 'Java Fundamentals', icon: '\u2615', color: '#e94560' },
+      { name: 'Aplica\u00E7\u00F5es Web com Django 4 e Bootstrap 5', icon: '\uD83D\uDD78\uFE0F', color: '#4ade80' },
+      { name: 'An\u00E1lise de Dados com Python e Pandas', icon: '\uD83D\uDC0D', color: '#f5a623' },
+      { name: 'Decola Tech 2025', icon: '\uD83D\uDE80', color: '#a78bfa' }
+    ];
+
+    const contacts = [
+      { label: 'GITHUB', value: 'github.com/paulo-rago', url: 'https://github.com/paulo-rago', icon: '\uD83D\uDC19', color: '#4ade80' },
+      { label: 'LINKEDIN', value: 'linkedin.com/in/paulo-rago-a1a090219', url: 'https://www.linkedin.com/in/paulo-rago-a1a090219', icon: '\uD83D\uDCBC', color: '#38bdf8' },
+      { label: 'EMAIL', value: 'paulocostarago@gmail.com', url: 'mailto:paulocostarago@gmail.com', icon: '\u2709\uFE0F', color: '#f5a623' }
+    ];
+
+    const tip = this.state.tip;
+    const tipBase = 'position:fixed;z-index:130;max-width:240px;background:#0f3460;border:3px solid #f5a623;color:#fff;font-family:Inter,sans-serif;font-size:12px;line-height:1.5;padding:8px 11px;box-shadow:4px 4px 0 rgba(0,0,0,0.5);pointer-events:none;';
+    const tipStyle = tip
+      ? tipBase + 'display:block;left:' + (Math.min(tip.x + 16, (window.innerWidth || 1200) - 250)) + 'px;top:' + (tip.y + 16) + 'px;'
+      : tipBase + 'display:none;';
+
+    const scan = this.props.scanlines ?? true;
+    const vig = this.props.crtVignette ?? true;
+    const stars = this.props.starfield ?? true;
+
+    return {
+      navItems,
+      menuOpen: this.state.menuOpen,
+      konami: this.state.konami,
+      skillCats, projects, certs, contacts,
+      tipText: tip ? tip.text : '',
+      tipStyle,
+      soundIcon: this.state.soundOn ? '\u266A' : '\u2715',
+      soundLabel: this.state.soundOn ? 'SOM ON' : 'SOM OFF',
+      soundColor: this.state.soundOn ? '#4ade80' : '#8a8aa8',
+      scanlineStyle: 'position:fixed;inset:0;z-index:60;pointer-events:none;' + (scan ? 'background:repeating-linear-gradient(0deg,rgba(0,0,0,0.16) 0px,rgba(0,0,0,0.16) 1px,transparent 1px,transparent 3px);' : 'display:none;'),
+      vignetteStyle: 'position:fixed;inset:0;z-index:59;pointer-events:none;' + (vig ? 'box-shadow:inset 0 0 180px 50px rgba(0,0,0,0.65);' : 'display:none;'),
+      starStyle: stars ? '' : 'display:none;',
+      pressStart: () => this.scrollTo('sobre'),
+      goHome: () => this.scrollTo('hero'),
+      playBlip: () => this.playBlip(),
+      toggleSound: () => this.toggleSound(),
+      toggleMenu: () => this.toggleMenu()
+    };
+  }
+}
+</script>
+</body>
+</html>
